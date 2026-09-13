@@ -1,0 +1,33 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+
+.env
+.venv/
+venv/
+
+# MIMIC-IV clinical data
+data/
+*.csv
+*.csv.gz
+
+# BUT keep evaluation artifacts
+!artifacts/evaluation/model_comparison.csv
+
+# Generated artifacts (reproducible)
+artifacts/preprocessed/
+artifacts/longihealth_cohort.csv
+artifacts/longihealth_lab_*.csv
+artifacts/longihealth_vital_*.csv
+artifacts/longihealth_final_feature_matrix.csv
+artifacts/longihealth_train.csv
+artifacts/longihealth_validation.csv
+artifacts/longihealth_test.csv
+
+# Local logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
