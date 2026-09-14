@@ -1,0 +1,48 @@
+cff-version: 1.2.0
+message: "If you use LongiHealth in research, please cite it as below."
+title: "LongiHealth: A Reproducible Longitudinal EHR Analytics Pipeline"
+abstract: >-
+  LongiHealth is a reproducible research software pipeline for
+  longitudinal electronic health record analytics and exploratory
+  hospital mortality prediction. It emphasizes leakage-safe cohort
+  construction, temporal feature extraction, patient-level splitting,
+  training-only preprocessing, and baseline machine learning.
+authors:
+  - family-names: "Moafi"
+    given-names: "Sepideh"
+    email: "sepideh.moafi90@gmail.com"
+version: "1.0.0"
+date-released: "2026-09-14"
+license: MIT
+repository-code: "https://github.com/AIResearcher20/longihealth"
+keywords:
+  - reproducible research
+  - electronic health records
+  - machine learning
+  - MIMIC-IV
+  - clinical informatics
+  - research software engineering
+references:
+  - type: software
+    title: "MIMIC-IV Clinical Database Demo"
+    authors:
+      - family-names: "Johnson"
+        given-names: "Alistair E. W."
+      - family-names: "Bulgarelli"
+        given-names: "Lucas"
+      - family-names: "Shen"
+        given-names: "Luca"
+    doi: "10.13026/dp1f-ex47"
+    url: "https://physionet.org/content/mimic-iv-demo/2.2/"
+  - type: article
+    title: "MIMIC-IV, a freely accessible electronic health record dataset"
+    authors:
+      - family-names: "Johnson"
+        given-names: "Alistair E. W."
+      - family-names: "Bulgarelli"
+        given-names: "Lucas"
+      - family-names: "Shen"
+        given-names: "Luca"
+    journal: "Scientific Data"
+    year: 2023
+    doi: "10.1038/s41597-022-01899-x"
