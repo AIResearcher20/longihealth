@@ -1,0 +1,108 @@
+# ============================================================
+# LongiHealth Configuration
+# ============================================================
+
+project:
+  name: LongiHealth
+  version: "1.0.0"
+  random_seed: 42
+
+paths:
+  data_root: "data"
+  mimic_versioned_root: "data/physionet.org/files/mimic-iv-demo/2.2"
+  artifacts_root: "artifacts"
+  preprocessed_root: "artifacts/preprocessed"
+  evaluation_root: "artifacts/evaluation"
+  figures_root: "artifacts/evaluation/figures"
+
+mimic:
+  version: "2.2"
+  base_url: "https://physionet.org/files/mimic-iv-demo/2.2/"
+  hosp_dir: "hosp"
+  icu_dir: "icu"
+
+tables:
+  admissions: "hosp/admissions.csv.gz"
+  patients: "hosp/patients.csv.gz"
+  labevents: "hosp/labevents.csv.gz"
+  d_labitems: "hosp/d_labitems.csv.gz"
+  icustays: "icu/icustays.csv.gz"
+  chartevents: "icu/chartevents.csv.gz"
+  d_items: "icu/d_items.csv.gz"
+
+cohort:
+  index_event: "first_icu_stay"
+  feature_window_hours: 24
+  outcome_column: "hospital_expire_flag"
+
+features:
+  lab:
+    min_observed_fraction: 0.20
+    aggregation_stats:
+      - mean
+      - min
+      - max
+      - std
+      - count
+      - abnormal_count
+
+  vital:
+    selected_item_ids:
+      - 220045
+      - 220050
+      - 220051
+      - 220052
+      - 220179
+      - 220180
+      - 220181
+      - 223762
+      - 226329
+      - 228232
+    aggregation_stats:
+      - mean
+      - min
+      - max
+      - std
+      - count
+
+split:
+  test_size: 0.30
+  val_size: 0.50
+  stratify_by: "outcome"
+  level: "patient"
+
+preprocessing:
+  missing_threshold: 0.80
+  imputation_strategy: "median"
+  scaling: "standard"
+
+models:
+  logistic_regression:
+    C: 1.0
+    solver: "liblinear"
+    max_iter: 2000
+    class_weight: "balanced"
+
+  random_forest:
+    n_estimators: 500
+    max_depth: 5
+    min_samples_leaf: 3
+    class_weight: "balanced"
+
+  gradient_boosting:
+    n_estimators: 200
+    learning_rate: 0.03
+    max_depth: 2
+    min_samples_leaf: 4
+    subsample: 0.8
+
+evaluation:
+  threshold: 0.50
+  metrics:
+    - auroc
+    - auprc
+    - f1
+    - precision
+    - recall
+    - balanced_accuracy
+    - brier
