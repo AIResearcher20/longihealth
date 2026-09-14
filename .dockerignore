@@ -1,0 +1,36 @@
+# Data (never ship clinical data inside an image)
+data/
+*.csv
+*.csv.gz
+
+# Generated artifacts
+artifacts/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Git
+.git/
+.gitignore
+
+# Notebooks
+*.ipynb
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Secrets
+.env
+*.log
