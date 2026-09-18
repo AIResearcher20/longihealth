@@ -22,6 +22,10 @@
 </div>
 
 ---
+**Year:** 2026  
+**License:** MIT  
+**Author:** Sepideh Moafi
+---
 
 ## 📖 Overview
 
