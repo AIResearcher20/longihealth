@@ -1,21 +1,3 @@
-"""
-LongiHealth — End-to-end pipeline.
-
-Run:
-    python -m longihealth.pipeline
-
-Executes:
-    1. Load configuration
-    2. Build cohort
-    3. Extract lab features
-    4. Extract vital features
-    5. Merge final clinical matrix
-    6. Patient-level split
-    7. Leakage-safe preprocessing
-    8. Train baseline models
-    9. Evaluate and save reports
-"""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -45,27 +27,11 @@ from .evaluate import (
 
 
 def run_pipeline(config_path: str | Path | None = None) -> None:
-    """
-    Run the LongiHealth pipeline end to end.
-    """
-
-    print("=" * 70)
-    print("LongiHealth — Pipeline")
-    print("=" * 70)
-
-    # --------------------------------------------------------
-    # 1. Config
-    # --------------------------------------------------------
-
     cfg = load_config(config_path)
     artifacts = Path(cfg["paths"]["artifacts_root"])
     artifacts.mkdir(parents=True, exist_ok=True)
 
     print(f"\n[1] Config loaded: {cfg['project']['name']} v{cfg['project']['version']}")
-
-    # --------------------------------------------------------
-    # 2. Cohort
-    # --------------------------------------------------------
 
     cohort = build_cohort(cfg)
     cohort.to_csv(artifacts / "longihealth_cohort.csv", index=False)
@@ -73,10 +39,6 @@ def run_pipeline(config_path: str | Path | None = None) -> None:
     cs = cohort_summary(cohort)
     print(f"[2] Cohort: {cs['admissions']} admissions, {cs['patients']} patients, "
           f"{cs['positive_outcomes']} positive outcomes")
-
-    # --------------------------------------------------------
-    # 3. Lab features
-    # --------------------------------------------------------
 
     lab_features = extract_lab_features(cfg, cohort)
     d_labitems = load_dictionary(cfg, "d_labitems")
@@ -95,10 +57,6 @@ def run_pipeline(config_path: str | Path | None = None) -> None:
     ]
     print(f"[3] Lab features: {len(lab_feat_cols)}")
 
-    # --------------------------------------------------------
-    # 4. Vital features
-    # --------------------------------------------------------
-
     vital_features = extract_vital_features(cfg, cohort)
     d_items = load_dictionary(cfg, "d_items")
 
@@ -115,10 +73,6 @@ def run_pipeline(config_path: str | Path | None = None) -> None:
     ]
     print(f"[4] Vital features: {len(vital_feat_cols)}")
 
-    # --------------------------------------------------------
-    # 5. Final clinical matrix
-    # --------------------------------------------------------
-
     clinical = merge_clinical_features(cohort, lab_matrix, vital_matrix)
     clinical.to_csv(artifacts / "longihealth_final_feature_matrix.csv", index=False)
 
@@ -126,10 +80,6 @@ def run_pipeline(config_path: str | Path | None = None) -> None:
     print(f"[5] Final matrix: {clinical.shape}, "
           f"{fs['total_features']} features, "
           f"missing {fs['overall_missingness']:.2%}")
-
-    # --------------------------------------------------------
-    # 6. Split
-    # --------------------------------------------------------
 
     train, val, test = split_patient_level(clinical, cfg)
 
@@ -142,19 +92,11 @@ def run_pipeline(config_path: str | Path | None = None) -> None:
           f"val={ss['validation']['admissions']}, "
           f"test={ss['test']['admissions']}")
 
-    # --------------------------------------------------------
-    # 7. Preprocessing
-    # --------------------------------------------------------
-
     prep = preprocess_splits(train, val, test, cfg)
     save_preprocessed(prep, cfg["paths"]["preprocessed_root"])
 
     print(f"[7] Preprocessing: {len(prep['features'])} features kept, "
           f"{len(prep['removed'])} removed")
-
-    # --------------------------------------------------------
-    # 8. Models
-    # --------------------------------------------------------
 
     X_train = prep["X_train"]
     X_val = prep["X_val"]
@@ -187,10 +129,6 @@ def run_pipeline(config_path: str | Path | None = None) -> None:
 
     print(f"[8] Trained {len(predictions)} models")
 
-    # --------------------------------------------------------
-    # 9. Evaluation
-    # --------------------------------------------------------
-
     threshold = cfg["evaluation"]["threshold"]
     comparison = compare_models(predictions, threshold=threshold)
 
@@ -217,8 +155,8 @@ def run_pipeline(config_path: str | Path | None = None) -> None:
     save_report(report, eval_dir / "longihealth_evaluation_report.json")
 
     print(f"[9] Best test model by AUROC: {best}")
-    print(f"\n✅ Pipeline completed.")
-    print(f"   Artifacts root: {artifacts}")
+    print("\nPipeline completed.")
+    print(f"Artifacts root: {artifacts}")
 
 
 def main() -> None:
