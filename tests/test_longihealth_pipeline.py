@@ -211,6 +211,28 @@ def test_split_preserves_all_patients(synthetic_cohort, config):
     assert total == synthetic_cohort["subject_id"].nunique()
 
 
+def test_split_ratios_are_reasonable(synthetic_cohort, config):
+    """
+    Validation and test should each hold roughly the configured share.
+
+    This guards against a regression where the second split reuses
+    the full-cohort test_size, which would make validation far smaller
+    than intended.
+    """
+    train, val, test = split_patient_level(synthetic_cohort, config)
+
+    n_total = synthetic_cohort["subject_id"].nunique()
+    val_share = val["subject_id"].nunique() / n_total
+    test_share = test["subject_id"].nunique() / n_total
+
+    expected_val = config["split"]["val_size"]
+    expected_test = config["split"]["test_size"]
+
+    # Tolerance for rounding in a tiny cohort.
+    assert abs(val_share - expected_val) < 0.10
+    assert abs(test_share - expected_test) < 0.10
+
+
 # ------------------------------------------------------------
 # Preprocessing tests
 # ------------------------------------------------------------
