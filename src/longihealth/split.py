@@ -1,84 +1,54 @@
 """
-LongiHealth — Patient-level dataset splitting.
+Patient-level splitting for LongiHealth.
 
-Prevents the same patient from appearing in more than one split.
-
-Steps
------
-1. Build a patient-level outcome table (max of admission outcomes).
-2. Stratified split into train / temp.
-3. Stratified split of temp into validation / test.
-4. Assign whole patients (all their admissions) to their split.
+Splits admissions into train/validation/test so that no patient
+appears in more than one split. Stratification uses a per-patient
+binary outcome (1 if any admission was positive).
 """
 
-from __future__ import annotations
-
-from typing import Any, Dict, Tuple
+from typing import Any
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
-def _patient_outcomes(
-    df: pd.DataFrame
-) -> pd.DataFrame:
-    """
-    Build a patient-level outcome table.
-
-    A patient is positive if ANY of their admissions is positive.
-    """
-
-    return (
-        df.groupby("subject_id")["outcome"]
-        .max()
-        .reset_index()
-    )
+def patient_outcomes(df: pd.DataFrame) -> pd.DataFrame:
+    """One row per patient with a binary outcome."""
+    return df.groupby("subject_id", as_index=False)["outcome"].max()
 
 
 def split_patient_level(
     df: pd.DataFrame,
-    config: Dict[str, Any],
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    config: dict[str, Any],
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    Split a DataFrame into train / validation / test at the
-    patient level.
+    Return (train, val, test), split at the patient level.
 
-    Returns
-    -------
-    (train, validation, test)
+    val_size and test_size are interpreted as fractions of the full
+    cohort. The first cut holds out (val + test) together; the
+    second cut divides that temp set into val and test.
     """
-
     seed = config["project"]["random_seed"]
-    test_size = config["split"]["test_size"]
     val_size = config["split"]["val_size"]
-    stratify_by = config["split"]["stratify_by"]
+    test_size = config["split"]["test_size"]
 
-    if stratify_by != "outcome":
-        raise ValueError(
-            "Only stratification by outcome is supported."
-        )
+    if config["split"]["stratify_by"] != "outcome":
+        raise ValueError("Only stratification by outcome is supported.")
 
-    patients = _patient_outcomes(df)
-
-    # --------------------------------------------------------
-    # 1. Train vs temporary
-    # --------------------------------------------------------
+    patients = patient_outcomes(df)
 
     train_patients, temp_patients = train_test_split(
         patients,
-        test_size=test_size,
+        test_size=val_size + test_size,
         random_state=seed,
         stratify=patients["outcome"],
     )
 
-    # --------------------------------------------------------
-    # 2. Validation vs test
-    # --------------------------------------------------------
-
+    val_share = val_size / (val_size + test_size)
     val_patients, test_patients = train_test_split(
         temp_patients,
-        test_size=val_size,
-        random_state=seed,
+        test_size=1.0 - val_share,
+        random_state=seed + 1,
         stratify=temp_patients["outcome"],
     )
 
@@ -86,17 +56,12 @@ def split_patient_level(
     val_ids = set(val_patients["subject_id"])
     test_ids = set(test_patients["subject_id"])
 
-    # --------------------------------------------------------
-    # 3. Sanity: no overlap
-    # --------------------------------------------------------
-
-    assert train_ids.isdisjoint(val_ids)
-    assert train_ids.isdisjoint(test_ids)
-    assert val_ids.isdisjoint(test_ids)
-
-    # --------------------------------------------------------
-    # 4. Materialise splits
-    # --------------------------------------------------------
+    if train_ids & val_ids:
+        raise RuntimeError("Patient overlap between train and validation.")
+    if train_ids & test_ids:
+        raise RuntimeError("Patient overlap between train and test.")
+    if val_ids & test_ids:
+        raise RuntimeError("Patient overlap between validation and test.")
 
     train = df[df["subject_id"].isin(train_ids)].copy()
     val = df[df["subject_id"].isin(val_ids)].copy()
@@ -109,20 +74,18 @@ def split_summary(
     train: pd.DataFrame,
     val: pd.DataFrame,
     test: pd.DataFrame,
-) -> Dict[str, Dict[str, int]]:
-    """
-    Compact summary of a patient-level split.
-    """
+) -> dict[str, dict[str, int]]:
+    """Per-split counts of patients, admissions, and positive outcomes."""
 
-    def _stats(df: pd.DataFrame) -> Dict[str, int]:
+    def stats(split: pd.DataFrame) -> dict[str, int]:
         return {
-            "patients": int(df["subject_id"].nunique()),
-            "admissions": int(len(df)),
-            "positive_outcomes": int(df["outcome"].sum()),
+            "patients": int(split["subject_id"].nunique()),
+            "admissions": len(split),
+            "positive_outcomes": int(split["outcome"].sum()),
         }
 
     return {
-        "train": _stats(train),
-        "validation": _stats(val),
-        "test": _stats(test),
+        "train": stats(train),
+        "validation": stats(val),
+        "test": stats(test),
     }
