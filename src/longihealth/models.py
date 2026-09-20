@@ -1,18 +1,4 @@
-"""
-LongiHealth — Baseline classifiers.
-
-Three models:
-    1. Logistic Regression
-    2. Random Forest
-    3. Gradient Boosting
-
-Each model is trained on the training split only. Class imbalance
-is handled via class_weight / sample_weight.
-"""
-
-from __future__ import annotations
-
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -25,17 +11,9 @@ from sklearn.ensemble import (
 from sklearn.utils.class_weight import compute_sample_weight
 
 
-# ------------------------------------------------------------
-# Model builders
-# ------------------------------------------------------------
-
 def build_logistic_regression(
-    config: Dict[str, Any]
+    config: dict[str, Any]
 ) -> LogisticRegression:
-    """
-    Build a class-balanced logistic regression.
-    """
-
     params = config["models"]["logistic_regression"]
 
     return LogisticRegression(
@@ -48,12 +26,8 @@ def build_logistic_regression(
 
 
 def build_random_forest(
-    config: Dict[str, Any]
+    config: dict[str, Any]
 ) -> RandomForestClassifier:
-    """
-    Build a class-balanced random forest.
-    """
-
     params = config["models"]["random_forest"]
 
     return RandomForestClassifier(
@@ -67,12 +41,8 @@ def build_random_forest(
 
 
 def build_gradient_boosting(
-    config: Dict[str, Any]
+    config: dict[str, Any]
 ) -> GradientBoostingClassifier:
-    """
-    Build a gradient boosting classifier.
-    """
-
     params = config["models"]["gradient_boosting"]
 
     return GradientBoostingClassifier(
@@ -85,21 +55,11 @@ def build_gradient_boosting(
     )
 
 
-# ------------------------------------------------------------
-# Training helper
-# ------------------------------------------------------------
-
 def fit_model(
     model,
     X_train: np.ndarray,
     y_train: np.ndarray,
 ) -> Any:
-    """
-    Fit a model. For GradientBoosting, sample weights are used
-    to handle class imbalance. Other models use their built-in
-    class_weight parameter.
-    """
-
     if isinstance(model, GradientBoostingClassifier):
         sample_weight = compute_sample_weight(
             class_weight="balanced",
@@ -112,18 +72,10 @@ def fit_model(
     return model
 
 
-# ------------------------------------------------------------
-# Feature importance helpers
-# ------------------------------------------------------------
-
 def feature_importance(
     model,
     feature_names: list[str],
 ) -> pd.DataFrame | None:
-    """
-    Return feature importance if available.
-    """
-
     if hasattr(model, "feature_importances_"):
         return (
             pd.DataFrame(
